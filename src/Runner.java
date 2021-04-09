@@ -11,7 +11,8 @@ public class Runner implements AM {
     @Override
     public void run(AMInfo info) {
         DataChunk dataChunk = (DataChunk) info.parent.readObject();
-        List<Integer> result = new ArrayList<>();
+	System.out.println(dataChunk.diagonal.size());
+        ArrayList<Integer> result = new ArrayList<>();
         for (int i = 0; i < dataChunk.diagonal.size(); i++) {
             int valLeft = dataChunk.prevDiagonal.get(i);
             int valUp = 1000000000;
@@ -23,6 +24,7 @@ public class Runner implements AM {
             }
             result.add(dataChunk.diagonal.get(i) + min(valUp, valLeft));
         }
-        info.parent.write((Serializable)result);
+	dataChunk.diagonal = result;
+        info.parent.write((Serializable)dataChunk);
     }
 }

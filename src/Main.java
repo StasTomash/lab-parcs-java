@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Scanner;
 
 public class Main {
-    private static final int WORKERS_COUNT = 2;
+    private static final int WORKERS_COUNT = 4;
     private static List<List<Integer>> splitList(List<Integer> src) {
         int partitionSize = (src.size() + WORKERS_COUNT - 1) / WORKERS_COUNT;
         List<Integer> curList = null;
@@ -51,9 +51,26 @@ public class Main {
             }
         }
 
-        List<Integer> prevDiagonal = new ArrayList<>() {{ add(0); }};
+	List<point> points = new ArrayList<>();
+	List<channel> channels = new ArrayList<>();
+	for (int i = 0; i < WORKERS_COUNT; i++) {
+	    points.add(info.createPoint());
+	    channels.add(points.get(i).createChannel());
+	}
+
+        List<Integer> prevDiagonal = new ArrayList<>();
         for (int iteration = 0; iteration < 2 * n - 1; iteration++) {
-            List<channel> channels = new ArrayList<>();
+	    if (iteration != 0) {
+		for (int i = 0; i < WORKERS_COUNT; i++) {
+		    points.set(i, info.createPoint());
+		    channels.set(i, points.get(i).createChannel());
+		}
+	    }	    
+            if (iteration > 0) {
+		prevDiagonal.add(100000000);
+	    } else {
+		prevDiagonal.add(0);
+	    }
             List<List<Integer>> diagonalChunks = splitList(diagonals.get(iteration));
             List<Integer> diagonal = diagonals.get(iteration);
             int prevPos = 0;
@@ -64,9 +81,11 @@ public class Main {
                 } catch (IndexOutOfBoundsException exception) {
                     chunk = new ArrayList<>();
                 }
-                if (diagonal.size() > prevDiagonal.size()) {
+
+                if (diagonal.size() >= prevDiagonal.size()) {
                     if (i == 0) {
-                        prevChunk = new ArrayList<>() {{ add(1000000000); }};
+                        prevChunk = new ArrayList<>();
+			prevChunk.add(1000000000);
                         prevChunk.addAll(prevDiagonal.subList(prevPos, prevPos + chunk.size()));
                     } else {
                         prevChunk = new ArrayList<>(prevDiagonal.subList(prevPos - 1, prevPos + chunk.size()));
@@ -74,20 +93,20 @@ public class Main {
                 } else {
                     prevChunk = new ArrayList<>(prevDiagonal.subList(prevPos, prevPos + chunk.size() + 1));
                 }
-                point p = info.createPoint();
-                channel c = p.createChannel();
-                p.execute("Runner");
-                c.write(new DataChunk(chunk, prevChunk));
-                channels.add(c);
+		prevPos += chunk.size();
+		points.get(i).execute("Runner");
+                channels.get(i).write(new DataChunk(chunk, prevChunk));
+		//System.out.println("wrote" + i);
             }
+	    prevDiagonal.clear();
             for (parcs.channel channel : channels) {
-                prevDiagonal.clear();
-                List<Integer> resChunk = (List<Integer>)channel.readObject();
-                prevDiagonal.addAll(resChunk);
+                DataChunk resChunk = (DataChunk)channel.readObject();
+                prevDiagonal.addAll(resChunk.diagonal);
+		//System.out.println("read");
             }
         }
 
-        System.out.printf("Done, result is %d", prevDiagonal.get(0));
+        System.out.printf("Done, result is %d\n", prevDiagonal.get(0));
 
         curTask.end();
     }

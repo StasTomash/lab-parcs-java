@@ -10,7 +10,7 @@ def gen(n, path):
     for i in range(n):
         row = []
         for j in range(n):
-            row.append(random.randrange(100))
+            row.append(random.randrange(10))
         table.append(row)
         file.write(f"{' '.join(list(map(str, row)))}\n")
     file.close()
@@ -39,5 +39,5 @@ def gen_expected(table, path):
 
 
 if __name__ == '__main__':
-    table = gen(500, "out/test.txt")
+    table = gen(50, "out/test.txt")
     gen_expected(table, "expected_output.txt")
