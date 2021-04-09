@@ -7,9 +7,10 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.io.Serializable;
 
 public class Main {
-    private static final int WORKERS_COUNT = 4;
+    private static final int WORKERS_COUNT = 1;
     private static final int ITERATIONS = 100000000;
     private static List<List<Integer>> splitList(List<Integer> src) {
         int partitionSize = (src.size() + WORKERS_COUNT - 1) / WORKERS_COUNT;
@@ -34,8 +35,9 @@ public class Main {
         Scanner testReader = new Scanner(testcase);
 
         int n = testReader.nextInt();
-        DataChunk.Figure[] figures = new DataChunk.Figure[n];
+        Figure[] figures = new Figure[n];
         for (int i = 0; i < n; i++) {
+	    figures[i] = new Figure();
             figures[i].type = testReader.nextInt();
             figures[i].x = testReader.nextInt();
             figures[i].y = testReader.nextInt();
@@ -51,7 +53,8 @@ public class Main {
         }
 
         for (int i = 0; i < WORKERS_COUNT; i++) {
-            channels.get(i).write(new DataChunk(figures, ITERATIONS / WORKERS_COUNT));
+	    points.get(i).execute("Runner");
+            channels.get(i).write((Serializable)new DataChunk(figures, ITERATIONS / WORKERS_COUNT));
         }
 
         double totalResult = (double) 0;

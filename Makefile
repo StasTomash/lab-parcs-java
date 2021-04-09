@@ -5,13 +5,13 @@ clean:
 
 out/Main.jar: out/parcs.jar src/*.java
 	@javac -cp out/parcs.jar src/*.java
-	@jar cf out/Main.jar -C src Main.class -C src Runner.class -C src DataChunk.class
+	@jar cf out/Main.jar -C src Main.class -C src Runner.class -C src DataChunk.class -C src Figure.class
 	@rm -f src/*.class
 
-out/Runner.jar: out/parcs.jar src/Runner.java src/DataChunk.java
-	@javac -cp out/parcs.jar src/Runner.java src/DataChunk.java
-	@jar cf out/Runner.jar -C src Runner.class -C src DataChunk.class
-	@rm -f src/Runner.class src/DataChunk.class
+out/Runner.jar: out/parcs.jar src/Runner.java src/DataChunk.java src/Figure.java
+	@javac -cp out/parcs.jar src/Runner.java src/DataChunk.java src/Figure.java
+	@jar cf out/Runner.jar -C src Runner.class -C src DataChunk.class -C src Figure.class
+	@rm -f src/Runner.class src/DataChunk.class src/Figure.class
 
 build: out/Main.jar out/Runner.jar
 
