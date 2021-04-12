@@ -10,6 +10,7 @@ import java.util.Scanner;
 
 public class Main {
     private static final int WORKERS_COUNT = 4;
+    private static final int ITERATIONS = 100000000;
     private static List<List<Integer>> splitList(List<Integer> src) {
         int partitionSize = (src.size() + WORKERS_COUNT - 1) / WORKERS_COUNT;
         List<Integer> curList = null;
@@ -33,80 +34,33 @@ public class Main {
         Scanner testReader = new Scanner(testcase);
 
         int n = testReader.nextInt();
-        int[][] table = new int[n][n];
+        DataChunk.Figure[] figures = new DataChunk.Figure[n];
         for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                table[i][j] = testReader.nextInt();
-            }
+            figures[i].type = testReader.nextInt();
+            figures[i].x = testReader.nextInt();
+            figures[i].y = testReader.nextInt();
+            figures[i].radius = testReader.nextInt();
         }
 
-        List<List<Integer>> diagonals = new ArrayList<>();
 
-        for (int i = 0; i < 2 * n - 1; i++) {
-            diagonals.add(new ArrayList<>());
-        }
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                diagonals.get(i + j).add(table[j][i]);
-            }
+        List<point> points = new ArrayList<>();
+        List<channel> channels = new ArrayList<>();
+        for (int i = 0; i < WORKERS_COUNT; i++) {
+            points.add(info.createPoint());
+            channels.add(points.get(i).createChannel());
         }
 
-	List<point> points = new ArrayList<>();
-	List<channel> channels = new ArrayList<>();
-	for (int i = 0; i < WORKERS_COUNT; i++) {
-	    points.add(info.createPoint());
-	    channels.add(points.get(i).createChannel());
-	}
-
-        List<Integer> prevDiagonal = new ArrayList<>();
-        for (int iteration = 0; iteration < 2 * n - 1; iteration++) {
-	    if (iteration != 0) {
-		for (int i = 0; i < WORKERS_COUNT; i++) {
-		    points.set(i, info.createPoint());
-		    channels.set(i, points.get(i).createChannel());
-		}
-	    }	    
-            if (iteration > 0) {
-		prevDiagonal.add(100000000);
-	    } else {
-		prevDiagonal.add(0);
-	    }
-            List<List<Integer>> diagonalChunks = splitList(diagonals.get(iteration));
-            List<Integer> diagonal = diagonals.get(iteration);
-            int prevPos = 0;
-            for (int i = 0; i < WORKERS_COUNT; i++) {
-                List<Integer> chunk, prevChunk;
-                try {
-                    chunk = diagonalChunks.get(i);
-                } catch (IndexOutOfBoundsException exception) {
-                    chunk = new ArrayList<>();
-                }
-
-                if (diagonal.size() >= prevDiagonal.size()) {
-                    if (i == 0) {
-                        prevChunk = new ArrayList<>();
-			prevChunk.add(1000000000);
-                        prevChunk.addAll(prevDiagonal.subList(prevPos, prevPos + chunk.size()));
-                    } else {
-                        prevChunk = new ArrayList<>(prevDiagonal.subList(prevPos - 1, prevPos + chunk.size()));
-                    }
-                } else {
-                    prevChunk = new ArrayList<>(prevDiagonal.subList(prevPos, prevPos + chunk.size() + 1));
-                }
-		prevPos += chunk.size();
-		points.get(i).execute("Runner");
-                channels.get(i).write(new DataChunk(chunk, prevChunk));
-		//System.out.println("wrote" + i);
-            }
-	    prevDiagonal.clear();
-            for (parcs.channel channel : channels) {
-                DataChunk resChunk = (DataChunk)channel.readObject();
-                prevDiagonal.addAll(resChunk.diagonal);
-		//System.out.println("read");
-            }
+        for (int i = 0; i < WORKERS_COUNT; i++) {
+            channels.get(i).write(new DataChunk(figures, ITERATIONS / WORKERS_COUNT));
         }
 
-        System.out.printf("Done, result is %d\n", prevDiagonal.get(0));
+        double totalResult = (double) 0;
+        for (int i = 0; i < WORKERS_COUNT; i++) {
+            double result = channels.get(i).readDouble();
+            totalResult += result / WORKERS_COUNT;
+        }
+
+        System.out.printf("Done, result is %f\n", totalResult);
 
         curTask.end();
     }
